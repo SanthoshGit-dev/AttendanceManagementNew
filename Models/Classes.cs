@@ -16,11 +16,8 @@ namespace AttendanceManagement.Models
         public string Section { get; set; }
         
         [Required]
-        [ForeignKey(nameof(InchargeStaff))]
+        [ForeignKey(nameof(Staffs))]
         public string InchargeStaffId { get; set; }
-        public Staffs InchargeStaff { get; set; }
 
-        [InverseProperty("Class")]
-        public ICollection<Students> Students { get; set; }
     }
 }

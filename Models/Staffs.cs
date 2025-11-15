@@ -15,11 +15,5 @@ namespace AttendanceManagement.Models
         [Required]
         public string Subject { get; set; }
 
-        [InverseProperty("InchargeStaff")]
-        public ICollection<Classes> ClassesIncharge { get; set; }
-
-        [InverseProperty("Staff")]
-        public ICollection<Students> Students { get; set; }
-
     }
 }

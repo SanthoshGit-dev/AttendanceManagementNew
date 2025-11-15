@@ -6,10 +6,10 @@ namespace AttendanceManagement.IRepository
     public interface IClassRepo
     {
         public Task<IQueryable<Classes>> AddClassAsync(AddClass addClass);
-        public Task<IQueryable<Classes>> UpdateClassAsync(string ClassId, UpdateClass updateclass);
+        public Task<Classes> UpdateClassAsync(string ClassId, UpdateClass updateclass);
         public Task DeleteClassAsync(string StaffId);
 
-        public Task<IEnumerable<Classes>> GetAllAsync();
+        public Task<IEnumerable<Classes>> GetAll();
         public Task<Classes> GetByIdAsync(string ClassId);
     }
 }
