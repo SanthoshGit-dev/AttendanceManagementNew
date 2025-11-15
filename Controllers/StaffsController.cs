@@ -1,5 +1,6 @@
 ﻿using AttendanceManagement.Dbo;
 using AttendanceManagement.IRepository;
+using AttendanceManagement.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +14,18 @@ namespace AttendanceManagement.Controllers
         public StaffsController(IStaffRepo staffrepo)
         {
             _staffRepo = staffrepo;
+        }
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetClass()
+        {
+            var staffs = await _staffRepo.GetAll();
+            return Ok(staffs);
+        }
+        [HttpGet("GetById")]
+        public async Task<IActionResult> GetById(string id)
+        {
+            var staffs = await _staffRepo.GetByIdAsync(id);
+            return Ok(staffs);
         }
         [HttpPost("add")]
         public async Task<IActionResult> AddStaff(AddStaff addstaff)

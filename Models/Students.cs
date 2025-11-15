@@ -13,16 +13,14 @@ namespace AttendanceManagement.Models
         public string StudentName { get; set; }
 
         [Required]
-        [ForeignKey(nameof(Classes))]
+        [ForeignKey(nameof(ClassDetails))]
         public string ClassId { get; set; }
 
         [Required]
-        [ForeignKey(nameof(Staffs))]
+        [ForeignKey(nameof(InchargeStaff))]
         public string StaffId { get; set; }
 
-        // Navigation Properties
-        public Classes Class { get; set; }
-        public Staffs Staff { get; set; }
-
+        public Staffs InchargeStaff { get; set; }
+        public Classes ClassDetails { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using AttendanceManagement.Dbo;
 using AttendanceManagement.IRepository;
 using AttendanceManagement.Models;
+using AttendanceManagement.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace AttendanceManagement.Repository
@@ -9,11 +10,13 @@ namespace AttendanceManagement.Repository
     public class ClassRepo : IClassRepo
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICacheService _cacheService;   
         private readonly DbSet<Classes> _dbSet;
-        public ClassRepo(ApplicationDbContext context)
+        public ClassRepo(ApplicationDbContext context, ICacheService cacheService)
         {
             _context = context;
             _dbSet = _context.Set<Classes>();
+            _cacheService = cacheService;
         }
         public async Task<IQueryable<Classes>> AddClassAsync(AddClass addClass)
         {
@@ -26,7 +29,7 @@ namespace AttendanceManagement.Repository
             };
             await _dbSet.AddAsync(classes);
             _context.SaveChanges();
-            var classed = _context.Classes.Include(c => c.InchargeStaff).ThenInclude(c => c.Students).Where(c => c.ClassId == addClass.ClassId);
+            var classed = _context.Classes;
             return classed;
         }
 
@@ -38,19 +41,26 @@ namespace AttendanceManagement.Repository
            
         }
 
-        public async Task<IEnumerable<Classes>> GetAllAsync()
+        public async Task<IEnumerable<Classes>> GetAll()
         {
-            var classed = _context.Classes.Include(c => c.InchargeStaff).ThenInclude(c => c.Students).ToList();
+            var cacheClass = _cacheService.GetData<IEnumerable<Classes>>("classList");
+            if (cacheClass != null && cacheClass.Count() > 0)
+            {
+                return cacheClass;
+            }
+            var classed = await _dbSet.ToListAsync();
+            var expiryTime = DateTimeOffset.Now.AddMinutes(2);
+            _cacheService.SetData("classList", classed, expiryTime);
             return classed;
         }
 
-        public async Task<Classes> GetByIdAsync(string ClassId)
+        public async Task<Classes> GetByIdAsync(string classId)
         {
-            var getid = await _dbSet.FindAsync(ClassId);
+            var getid = await _dbSet.FirstOrDefaultAsync(b => b.ClassId == classId);
             return getid;
         }
 
-        public async Task<IQueryable<Classes>> UpdateClassAsync(string ClassId, UpdateClass updateClass)
+        public async Task<Classes> UpdateClassAsync(string ClassId, UpdateClass updateClass)
         {
             var updatest = await _dbSet.FindAsync(ClassId);
             updatest.Section = updateClass.Section;
@@ -58,9 +68,10 @@ namespace AttendanceManagement.Repository
             updatest.InchargeStaffId = updateClass.InchargeStaffId;
             _dbSet.Update(updatest);
             _context.SaveChanges();
-            var classed = _context.Classes.Include(c => c.InchargeStaff).ThenInclude(c => c.Students).Where(c => c.ClassId == ClassId);
+            var classed = await _dbSet.FirstOrDefaultAsync(b => b.ClassId == ClassId);
             return classed;
 
         }
+
     }
 }

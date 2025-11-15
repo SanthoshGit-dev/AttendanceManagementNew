@@ -8,6 +8,7 @@ namespace AttendanceManagement.IRepository
         public Task<IQueryable<Students>> AddStudentAsync(AddStudent addStudent);
         public Task<IQueryable<Students>> UpdateStudentAsync(string StudentId, UpdateStudent updateStudent);
         public Task DeleteClassAsync(string StudentId);
-
+        public Task<IEnumerable<Students>> GetAll();
+        public Task<Students> GetByIdAsync(string StudentId);
     }
 }

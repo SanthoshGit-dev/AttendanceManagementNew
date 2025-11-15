@@ -2,6 +2,7 @@
 using AttendanceManagement.Dbo;
 using AttendanceManagement.IRepository;
 using AttendanceManagement.Models;
+using AttendanceManagement.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace AttendanceManagement.Repository
@@ -10,10 +11,12 @@ namespace AttendanceManagement.Repository
     {
         private readonly ApplicationDbContext _context;
         private readonly DbSet<Students> _dbSet;
-        public StudentRepo(ApplicationDbContext context)
+        private readonly ICacheService _cacheService;
+        public StudentRepo(ApplicationDbContext context, ICacheService cacheService)
         {
             _context = context;
             _dbSet = _context.Set<Students>();
+            _cacheService = cacheService;
         }
         public async Task<IQueryable<Students>> AddStudentAsync(AddStudent addStudent)
         {
@@ -31,7 +34,7 @@ namespace AttendanceManagement.Repository
             };
             await _dbSet.AddAsync(student);
             _context.SaveChanges();
-            var studentdata = _context.Students.Include(c => c.Staff).Include(c => c.Class).Where(c => c.StudentId == student.StudentId);
+            var studentdata = _context.Students;
             return studentdata;
         }
 
@@ -42,7 +45,21 @@ namespace AttendanceManagement.Repository
             _context.SaveChanges();
            
         }
-
+        public async Task<IEnumerable<Students>> GetAll()
+        {
+            var cacheStudent = _cacheService.GetData<IEnumerable<Students>>("studentList");
+            if (cacheStudent != null && cacheStudent.Count() > 0)
+            {
+                return cacheStudent;
+            }
+            var students = await _dbSet.Include(c => c.ClassDetails).Include(c => c.InchargeStaff).ToListAsync();
+            return students;
+        }
+        public async Task<Students> GetByIdAsync(string studentId)
+        {
+            var getid = await _dbSet.Include(c => c.ClassDetails).Include(c => c.InchargeStaff).FirstOrDefaultAsync(b => b.StudentId == studentId);
+            return getid;
+        }
         public async Task<IQueryable<Students>> UpdateStudentAsync(string StudentId, UpdateStudent updateStudent)
         {
             var updatest = await _dbSet.FindAsync(StudentId);
@@ -55,7 +72,7 @@ namespace AttendanceManagement.Repository
             updatest.FatherName = updateStudent.FatherName;
             _dbSet.Update(updatest);
             _context.SaveChanges();
-            var studentdata = _context.Students.Include(c => c.Staff).Include(c => c.Class).Where(c => c.StudentId == updatest.StudentId);
+            var studentdata = _context.Students;
             return studentdata;
 
         }

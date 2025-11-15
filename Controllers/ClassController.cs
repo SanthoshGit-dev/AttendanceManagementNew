@@ -1,5 +1,6 @@
 ﻿using AttendanceManagement.Dbo;
 using AttendanceManagement.IRepository;
+using AttendanceManagement.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +11,21 @@ namespace AttendanceManagement.Controllers
     public class ClassController : ControllerBase
     {
         private readonly IClassRepo _classRepo;
-        public ClassController(IClassRepo classrepo)
+        public ClassController(IClassRepo classrepo, ICacheService cacheService)
         {
             _classRepo = classrepo;
+        }
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetClass()
+        {
+            var classes = await _classRepo.GetAll();
+            return Ok(classes);
+        }
+        [HttpGet("GetById")]
+        public async Task<IActionResult> GetById(string id)
+        {
+            var classes = await _classRepo.GetByIdAsync(id);
+            return Ok(classes);
         }
         [HttpPost("add")]
         public async Task<IActionResult> AddClass(AddClass addclass)

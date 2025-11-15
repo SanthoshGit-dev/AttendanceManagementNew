@@ -8,6 +8,7 @@ namespace AttendanceManagement.IRepository
         public Task<Staffs> AddStaffAsync(AddStaff addStaff);
         public Task<Staffs> UpdateStaffAsync(string StaffId, UpdateStaff updatestaff);
         public Task DeleteStaffAsync(string StaffId);
-
+        public Task<IEnumerable<Staffs>> GetAll();
+        public Task<Staffs> GetByIdAsync(string StaffId);
     }
 }

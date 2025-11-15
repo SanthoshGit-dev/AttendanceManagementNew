@@ -2,6 +2,7 @@
 using AttendanceManagement.Dbo;
 using AttendanceManagement.IRepository;
 using AttendanceManagement.Models;
+using AttendanceManagement.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace AttendanceManagement.Repository
@@ -9,11 +10,13 @@ namespace AttendanceManagement.Repository
     public class StaffRepo : IStaffRepo
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICacheService _cacheService;
         private readonly DbSet<Staffs> _dbSet;
-        public StaffRepo(ApplicationDbContext context)
+        public StaffRepo(ApplicationDbContext context, ICacheService cacheService)
         {
             _context = context;
             _dbSet = _context.Set<Staffs>();
+            _cacheService = cacheService;
         }
         public async Task<Staffs> AddStaffAsync(AddStaff addStaff)
         {
@@ -31,7 +34,24 @@ namespace AttendanceManagement.Repository
             _context.SaveChanges();
             return staffs;
         }
+        public async Task<IEnumerable<Staffs>> GetAll()
+        {
+            var cacheStaff = _cacheService.GetData<IEnumerable<Staffs>>("staffList");
+            if (cacheStaff != null && cacheStaff.Count() > 0)
+            {
+                return cacheStaff;
+            }
+            var staff = await _dbSet.ToListAsync();
+            var expiryTime = DateTimeOffset.Now.AddMinutes(2);
+            _cacheService.SetData("staffList", staff, expiryTime);
+            return staff;
+        }
 
+        public async Task<Staffs> GetByIdAsync(string staffId)
+        {
+            var getid = await _dbSet.FirstOrDefaultAsync(b => b.StaffId == staffId);
+            return getid;
+        }
         public async Task DeleteStaffAsync(string StaffId)
         {
             var updatest = await _dbSet.FindAsync(StaffId);
