@@ -9,7 +9,7 @@ namespace AttendanceManagement.IRepository
         public Task<Classes> UpdateClassAsync(string ClassId, UpdateClass updateclass);
         public Task DeleteClassAsync(string StaffId);
 
-        public Task<IEnumerable<Classes>> GetAll();
-        public Task<Classes> GetByIdAsync(string ClassId);
+        public Task<IEnumerable<Classes>> GetAll(CancellationToken cancellationToken);
+        public Task<Classes> GetByIdAsync(string ClassId, CancellationToken cancellationToken);
     }
 }

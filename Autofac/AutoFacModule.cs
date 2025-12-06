@@ -1,4 +1,7 @@
 ﻿using AttendanceManagement.AppDbContext;
+using AttendanceManagement.Hangfire;
+using AttendanceManagement.Hangfire.Email;
+using AttendanceManagement.Hangfire.Email.Interface;
 using AttendanceManagement.IRepository;
 using AttendanceManagement.Repository;
 using AttendanceManagement.Services;
@@ -14,6 +17,9 @@ namespace AttendanceManagement.Autofac
             builder.RegisterType<ClassRepo>().As<IClassRepo>().InstancePerLifetimeScope();
             builder.RegisterType<StaffRepo>().As<IStaffRepo>().InstancePerLifetimeScope();
             builder.RegisterType<StudentRepo>().As<IStudentRepo>().InstancePerLifetimeScope();
+            builder.RegisterType<EmailService>().As<IEmailService>().InstancePerLifetimeScope();
+            builder.RegisterType<MerchService>().As<IMerchService>().InstancePerLifetimeScope();
+            builder.RegisterType<MaintananceService>().As<IManitanaceService>().InstancePerLifetimeScope();
             builder.Register(context =>
             {
                 var configuration = context.Resolve<Microsoft.Extensions.Configuration.IConfiguration>();
