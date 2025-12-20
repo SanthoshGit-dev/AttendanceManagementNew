@@ -1,12 +1,14 @@
 ﻿using AttendanceManagement.Dbo;
 using AttendanceManagement.IRepository;
 using AttendanceManagement.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace AttendanceManagement.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ClassController : ControllerBase
@@ -18,6 +20,7 @@ namespace AttendanceManagement.Controllers
             _classRepo = classrepo;
             _distributedCache = distributedcacheService;
         }
+        [Authorize(Roles = "USER")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetClass()
         {
@@ -25,6 +28,7 @@ namespace AttendanceManagement.Controllers
             var classes = await _classRepo.GetAll(cancellationToken);
             return Ok(classes);
         }
+        [Authorize(Roles = "USER")]
         [HttpGet("GetById")]
         public async Task<IActionResult> GetById(string id)
         {
@@ -32,6 +36,7 @@ namespace AttendanceManagement.Controllers
             var classes = await _classRepo.GetByIdAsync(id, cancellationToken);
             return Ok(classes);
         }
+        [Authorize(Roles = "ADMIN")]
         [HttpPost("add")]
         public async Task<IActionResult> AddClass(AddClass addclass)
         {
@@ -40,6 +45,7 @@ namespace AttendanceManagement.Controllers
            await _distributedCache.RemoveAsync("get-classes");
             return Ok(classes);
         }
+        [Authorize(Roles = "ADMIN")]
         [HttpPut("update/{ClassId}")]
         public async Task<IActionResult> UpdateClass(UpdateClass updateclass, string ClassId)
         {
@@ -48,6 +54,7 @@ namespace AttendanceManagement.Controllers
             await _distributedCache.RemoveAsync($"get-classes-{ClassId}");
             return Ok(classes);
         }
+        [Authorize(Roles = "ADMIN")]
         [HttpDelete("delete/{ClassId}")]
         public async Task<IActionResult> RemoveStaff(string ClassId)
         {
