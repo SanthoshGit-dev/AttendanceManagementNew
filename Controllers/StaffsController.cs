@@ -1,6 +1,8 @@
 ﻿using AttendanceManagement.Dbo;
+using AttendanceManagement.Hangfire.Email.Interface;
 using AttendanceManagement.IRepository;
 using AttendanceManagement.Repository;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,18 +33,22 @@ namespace AttendanceManagement.Controllers
         public async Task<IActionResult> AddStaff(AddStaff addstaff)
         {
            var staff = await _staffRepo.AddStaffAsync(addstaff);
+            var job = BackgroundJob.Enqueue<IEmailService>(x => x.SendWelcomeMail("staff@.com", $"{staff.StaffName}"));
+            Console.WriteLine(job);
            return Ok(staff);
         }
         [HttpPut("update/{StaffId}")]
         public async Task<IActionResult> UpdateStaff(UpdateStaff updatestaff, string StaffId)
         {
             var staff = await _staffRepo.UpdateStaffAsync(StaffId, updatestaff);
+            var job = BackgroundJob.Schedule<IManitanaceService>(x => x.SyncRecords(), TimeSpan.FromSeconds(20));
             return Ok(staff);
         }
         [HttpDelete("delete/{StaffId}")]
         public async Task<IActionResult> RemoveStaff(string StaffId)
         {
             await _staffRepo.DeleteStaffAsync(StaffId);
+            RecurringJob.AddOrUpdate<IMerchService>(x => x.RemoveMerch(StaffId), Cron.Minutely);
             return Ok();
         }
     }

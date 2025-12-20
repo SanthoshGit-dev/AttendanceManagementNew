@@ -4,19 +4,22 @@ using AttendanceManagement.IRepository;
 using AttendanceManagement.Models;
 using AttendanceManagement.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace AttendanceManagement.Repository
 {
     public class ClassRepo : IClassRepo
     {
         private readonly ApplicationDbContext _context;
-        private readonly ICacheService _cacheService;   
+        private readonly IDistributedCache _distributedCache;
         private readonly DbSet<Classes> _dbSet;
-        public ClassRepo(ApplicationDbContext context, ICacheService cacheService)
+        public ClassRepo(ApplicationDbContext context, IDistributedCache cacheService)
         {
             _context = context;
             _dbSet = _context.Set<Classes>();
-            _cacheService = cacheService;
+            _distributedCache = cacheService;
         }
         public async Task<IQueryable<Classes>> AddClassAsync(AddClass addClass)
         {
@@ -29,6 +32,7 @@ namespace AttendanceManagement.Repository
             };
             await _dbSet.AddAsync(classes);
             _context.SaveChanges();
+
             var classed = _context.Classes;
             return classed;
         }
@@ -41,22 +45,41 @@ namespace AttendanceManagement.Repository
            
         }
 
-        public async Task<IEnumerable<Classes>> GetAll()
+        public async Task<IEnumerable<Classes>> GetAll(CancellationToken cancellationToken = default)
         {
-            var cacheClass = _cacheService.GetData<IEnumerable<Classes>>("classList");
-            if (cacheClass != null && cacheClass.Count() > 0)
+            string key = "get-classes";
+            string? cachedMember = await _distributedCache.GetStringAsync(key, cancellationToken);
+            IEnumerable<Classes> classed;
+            if(string.IsNullOrEmpty(cachedMember))
             {
-                return cacheClass;
+                classed = await _dbSet.ToListAsync();
+                if(classed is null)
+                {
+                    return classed;
+                }
+                await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(classed), cancellationToken);
+                return classed;
             }
-            var classed = await _dbSet.ToListAsync();
-            var expiryTime = DateTimeOffset.Now.AddMinutes(2);
-            _cacheService.SetData("classList", classed, expiryTime);
+            classed = JsonConvert.DeserializeObject<IEnumerable<Classes>>(cachedMember);
             return classed;
+            
         }
 
-        public async Task<Classes> GetByIdAsync(string classId)
+        public async Task<Classes> GetByIdAsync(string classId, CancellationToken cancellationToken = default)
         {
-            var getid = await _dbSet.FirstOrDefaultAsync(b => b.ClassId == classId);
+            string key = $"get-classes-{classId}";
+            string? cachedMember = await _distributedCache.GetStringAsync(key, cancellationToken);
+            Classes getid;
+            if (string.IsNullOrEmpty(cachedMember)) { 
+                getid = await _dbSet.FirstOrDefaultAsync(b => b.ClassId == classId);
+                if(getid is null)
+                {
+                    return getid;
+                }
+                await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(getid), cancellationToken);
+                return getid;
+            }
+            getid = JsonConvert.DeserializeObject<Classes>(cachedMember);
             return getid;
         }
 
